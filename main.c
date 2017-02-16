@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <dlfcn.h>
 #include <mach/mach_error.h>
 #include <mach/task_info.h>
 #include <stdio.h>
@@ -21,6 +23,27 @@ int main() {
     printf("  %s\n", paths[i]);
   }
   free(paths);
+  struct mach_header_64* dyldHeader = (struct mach_header_64*)infos->dyldImageLoadAddress;
+  assert(dyldHeader->magic == MH_MAGIC_64);
+  const char **symbolNames = NULL;
+  uint32_t symbolCount = 0;
+  
+  Dl_info dlinfo;
+  assert(dladdr(main, &dlinfo) != 0);
+  struct mach_header_64* hdr = (struct mach_header_64*)dlinfo.dli_fbase;
+  assert(hdr->magic == MH_MAGIC_64);
+
+  void **symbols = machospec_copy_local_symbols(dyldHeader, &symbolNames, &symbolCount);
+  assert(symbols);
+  printf("%u symbols found:\n", symbolCount);
+  for (uint32_t i = 0; i < symbolCount; i++) {
+    printf("  %s: %p\n", symbolNames[i], symbols[i]);
+    if (strcmp(symbolNames[i], "_main") == 0) {
+      assert(symbols[i] == main);
+    }
+  }
+  free(symbols);
+  free(symbolNames);
   return 0;
 }
 

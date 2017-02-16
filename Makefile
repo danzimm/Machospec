@@ -1,6 +1,8 @@
 CC=clang
-CFLAGS=-Wall -Werror
+CFLAGS=-Wall -Werror -g -O0
 OBJ=Machospec.c.o main.c.o
+
+.PHONY: all clean
 
 all: machospec
 
@@ -12,4 +14,7 @@ machospec: $(OBJ)
 %.c.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 	$(CC) -MM $< $(CFLAGS) -o $(@:.o=.d)
+
+clean:
+	rm *.d *.o machospec
 
